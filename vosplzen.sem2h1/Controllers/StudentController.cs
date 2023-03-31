@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MethodTimer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using vosplzen.sem2h1.Data;
+using vosplzen.sem2h1.Data.DTOs;
+using vosplzen.sem2h1.Data.Mappers;
+using vosplzen.sem2h1.Data.Model;
 
 namespace vosplzen.sem2h1.Controllers
 {
@@ -50,6 +54,43 @@ namespace vosplzen.sem2h1.Controllers
                 return new JsonResult(_context.Students.Take(topCount).OrderBy(x => x.Surname).ToList());
             }
         }
+
+        
+        [HttpPost]
+        [Route("Add")]
+        [Time]
+        public IActionResult PostStudents(List<StudentDTO> studentDTOs)
+        {
+            List<Student> insertedStudents = new();
+
+            foreach (var studentDTO in studentDTOs)
+            {
+                if (ObjectPropertyHelper.isAnyPropertyNull(studentDTO._id, studentDTO.name, studentDTO.about, studentDTO.email))
+                    continue;
+
+                if(!_context.Students.Any(x => x.ExternalId == studentDTO._id))
+                {
+                    var stud = StudentMapper.StudentDTOToStudent(studentDTO);
+
+                    _context.Students.Add(stud);
+
+                    insertedStudents.Add(stud);
+                }
+            }
+            var addedStudents = StudentMapper.StudentsToStudentResponseDTOs(insertedStudents);
+
+            JsonResponse response = new JsonResponse()
+            {
+                students = addedStudents,
+                succeded = addedStudents.Count(),
+                failed = studentDTOs.Count() - addedStudents.Count()
+            };
+
+            _context.SaveChanges();
+
+            return new JsonResult(response);
+        }
+        //3078ms
 
     }
 }
