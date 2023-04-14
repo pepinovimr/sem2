@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using vosplzen.sem2h1.Data;
+using vosplzen.sem2h1.Filters;
 
 internal class Program
 {
@@ -17,7 +19,6 @@ internal class Program
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
               options.UseSqlServer(
                   builder.Configuration.GetConnectionString("DefaultConnection")));
-
 
         var app = builder.Build();
 

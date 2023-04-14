@@ -1,10 +1,7 @@
-﻿using MethodTimer;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
-using vosplzen.sem2h1.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using vosplzen.sem2h1.Data.DTOs;
-using vosplzen.sem2h1.Data.Mappers;
-using vosplzen.sem2h1.Data.Model;
+using vosplzen.sem2h1.Filters;
+using vosplzen.sem2h1.Services;
 
 namespace vosplzen.sem2h1.Controllers
 {
@@ -13,21 +10,18 @@ namespace vosplzen.sem2h1.Controllers
     [Route("Students")]
     public class StudentController : Controller
     {
+        private IStudentService _studentService;
 
-        private ApplicationDbContext _context;
-
-        public StudentController(ApplicationDbContext context) {
-
-            _context = context;
+        public StudentController(IStudentService studentService) 
+        {
+            _studentService = studentService;
         }
         
         [HttpGet]
         [Route("List")]
-        public IActionResult Getlist()
+        public IActionResult GetList()
         {
-
-            var result = _context.Students.ToList();
-            return new JsonResult(result);
+            return _studentService.GetStudents();
         }
 
         [HttpGet]
@@ -35,8 +29,7 @@ namespace vosplzen.sem2h1.Controllers
         public IActionResult GetFirst()
         {
 
-            var result = _context.Students.FirstOrDefault();
-            return new JsonResult(result);
+            return _studentService.GetFirstStudent();
         }
 
         [HttpGet]
@@ -45,50 +38,15 @@ namespace vosplzen.sem2h1.Controllers
             
             if(topCount <= 0) { return BadRequest(); }
 
-            if (orderBy == "name")
-            {
-                return new JsonResult(_context.Students.Take(topCount).OrderBy(x => x.Name).ToList());
-            }
-            else {
-
-                return new JsonResult(_context.Students.Take(topCount).OrderBy(x => x.Surname).ToList());
-            }
+            return _studentService.GetTopStudents(topCount, orderBy);
         }
 
-        
+        [IdentityFilter]
         [HttpPost]
         [Route("Add")]
-        [Time]
         public IActionResult PostStudents(List<StudentDTO> studentDTOs)
         {
-            List<Student> insertedStudents = new();
-
-            foreach (var studentDTO in studentDTOs)
-            {
-                if (ObjectPropertyHelper.isAnyPropertyNull(studentDTO._id, studentDTO.name, studentDTO.about, studentDTO.email))
-                    continue;
-
-                if(!_context.Students.Any(x => x.ExternalId == studentDTO._id))
-                {
-                    var stud = StudentMapper.StudentDTOToStudent(studentDTO);
-
-                    _context.Students.Add(stud);
-
-                    insertedStudents.Add(stud);
-                }
-            }
-            var addedStudents = StudentMapper.StudentsToStudentResponseDTOs(insertedStudents);
-
-            JsonResponse response = new JsonResponse()
-            {
-                students = addedStudents,
-                succeded = addedStudents.Count(),
-                failed = studentDTOs.Count() - addedStudents.Count()
-            };
-
-            _context.SaveChanges();
-
-            return new JsonResult(response);
+            return _studentService.PostStudents(studentDTOs);
         }
         //3078ms
 
