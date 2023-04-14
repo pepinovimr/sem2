@@ -1,4 +1,5 @@
 ﻿using MethodTimer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using vosplzen.sem2h1.Data;
@@ -8,7 +9,7 @@ using vosplzen.sem2h1.Data.Model;
 
 namespace vosplzen.sem2h1.Controllers
 {
-
+    [Authorize]
     [ApiController]
     [Route("Students")]
     public class StudentController : Controller
